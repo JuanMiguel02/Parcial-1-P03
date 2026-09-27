@@ -14,9 +14,9 @@ defmodule Reportes do
     |> IO.inspect()
   end
 
-  # defp generar_reporte_entregas_rechazadas() do
+   defp generar_reporte_entregas_rechazadas(entregas) do
 
-  # end
+   end
 
   defp generar_reporte_tanques(entregas, tanques) do
 
