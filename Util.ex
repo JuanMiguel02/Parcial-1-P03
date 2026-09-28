@@ -1,4 +1,8 @@
 defmodule Util do
+  @moduledoc """
+  Funciones auxiliares reutilizables para entrada, salida y transformación de datos.
+  """
+
   def mostrar(mensaje, :mensaje) do
     mensaje
     |> IO.puts()
@@ -52,6 +56,30 @@ defmodule Util do
 
   def convertir_coleccion_mensaje(coleccion, formato \\ fn elemento -> " - #{elemento}\n" end) do
     Enum.map(coleccion , formato)
+  end
+
+  @doc """
+  Formatea un valor monetario con separadores de miles y dos decimales.
+
+  Ejemplo: `Util.formatear_dinero(4913420)` retorna `"4.913.420.00"`.
+  """
+  def formatear_dinero(valor) when is_number(valor) do
+    str = :erlang.float_to_binary(valor * 1.0, decimals: 2)
+    [entera, decimal] = String.split(str, ".")
+    "#{formatear_numero(entera)}.#{decimal}"
+  end
+
+  def formatear_dinero(valor), do: to_string(valor)
+
+  @doc """
+  Agrega separadores de miles a un número o texto numérico.
+
+  Utiliza el punto como separador de miles.
+  """
+  def formatear_numero(valor) when is_number(valor) or is_binary(valor) do
+    valor
+    |> to_string()
+    |> String.replace(~r/\B(?=(\d{3})+(?!\d))/, ".")
   end
 
   def ordenar_coleccion(coleccion, sentido \\ :asc, obtener_campo \\ & &1) do

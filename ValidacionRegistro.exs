@@ -1,6 +1,15 @@
 defmodule ValidacionRegistro do
+  @moduledoc """
+  Valida registros de entrega introducidos como texto.
+
+  El formato esperado es `productor;tanque;dia;litros;grasa`.
+  """
+
   # (productor;tanque;dia;litros;grasa)
 
+  @doc """
+  Solicita un registro por consola y muestra el resultado de su validación.
+  """
   def main do
     entrada = Util.ingresar("Ingrese una entrega adicional: ", :texto)
 
@@ -8,6 +17,12 @@ defmodule ValidacionRegistro do
     |> IO.inspect()
   end
 
+  @doc """
+  Convierte y valida un registro de texto separado por punto y coma.
+
+  Retorna `{:ok, entrega}` cuando el formato es válido, `{:ok, :omitida}`
+  cuando la entrada está vacía, o `{:error, :formato_invalido}` en otro caso.
+  """
   def validar_registro(cadena) do
     case String.trim(cadena) do
       "" ->

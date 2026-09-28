@@ -1,4 +1,11 @@
 defmodule Liquidacion do
+  @moduledoc """
+  Calcula los valores económicos y las liquidaciones de los productores.
+
+  Incluye valor de entregas, bonificaciones, descuento de transporte y neto
+  a pagar, además del detalle agrupado por día.
+  """
+
   @tarifa_base 1800
   @litros_bonificacion 450
   @bonificacion_diaria 25000

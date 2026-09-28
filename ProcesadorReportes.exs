@@ -1,5 +1,19 @@
 defmodule ProcesadorReportes do
+  @moduledoc """
+  Genera los reportes estadísticos y financieros del centro de acopio.
+
+  Recibe entregas válidas, entregas rechazadas, tanques y productores, y
+  devuelve un mapa con la información necesaria para su impresión.
+  """
+
   @meta_diaria 2000
+
+  @doc """
+  Genera el conjunto completo de reportes de la operación semanal.
+
+  Las entregas rechazadas deben incluir el campo `:motivo`. Las entregas
+  recibidas en `entregas` deben haber sido validadas previamente.
+  """
   def generar_reporte(entregas, entregas_rechazadas, tanques, productores) do
     %{
       entregas_rechazadas: generar_reporte_entregas_rechazadas(entregas_rechazadas),
@@ -215,6 +229,12 @@ defmodule ProcesadorReportes do
   end
 
   # R8
+  @doc """
+  Devuelve los productores que realizaron entregas en todos los tanques.
+
+  La comparación se hace usando los identificadores de tanque presentes en
+  `tanques` y las entregas válidas de cada productor.
+  """
   def productores_en_todos_los_tanques(entregas_validas, tanques, productores) do
     total_tanques = length(tanques)
 

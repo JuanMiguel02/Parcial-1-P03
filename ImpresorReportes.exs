@@ -1,4 +1,19 @@
 defmodule ImpresorReportes do
+  @moduledoc """
+  Convierte los datos procesados de los reportes en un resumen de texto.
+
+  El módulo no calcula información de negocio; únicamente organiza y presenta
+  los resultados generados por `ProcesadorReportes`.
+  """
+
+  @doc """
+  Genera el reporte general en formato de texto.
+
+  El mapa recibido debe contener las claves generadas por
+  `ProcesadorReportes.generar_reporte/4`. El resultado puede imprimirse con
+  `IO.puts/1` o utilizarse como texto para otro medio de salida.
+  """
+  @spec mostrar(map()) :: String.t()
   def mostrar(reporte) do
     """
     +------------------------------------------------------+
@@ -104,10 +119,10 @@ defmodule ImpresorReportes do
     |> Enum.map(fn liquidacion ->
       "  - #{liquidacion.nombre} (#{liquidacion.codigo})\n" <>
         "      Litros: #{liquidacion.litros}\n" <>
-        "      Valor de entregas: $#{formatear_dinero(liquidacion.valor_entregas)}\n" <>
-        "      Bonificaciones: $#{formatear_dinero(liquidacion.bonificaciones)}\n" <>
-        "      Transporte: $#{formatear_dinero(liquidacion.transporte)}\n" <>
-        "      Neto: $#{formatear_dinero(liquidacion.neto)}"
+        "      Valor de entregas: $#{Util.formatear_dinero(liquidacion.valor_entregas)}\n" <>
+        "      Bonificaciones: $#{Util.formatear_dinero(liquidacion.bonificaciones)}\n" <>
+        "      Transporte: $#{Util.formatear_dinero(liquidacion.transporte)}\n" <>
+        "      Neto: $#{Util.formatear_dinero(liquidacion.neto)}"
     end)
     |> Enum.join("\n")
   end
@@ -124,24 +139,11 @@ defmodule ImpresorReportes do
 
   defp render_total_pagado(total) do
     "  Litros totales: #{total.total_litros}\n" <>
-      "  Total bruto: $#{formatear_dinero(total.total_bruto)}\n" <>
-      "  Bonificaciones: $#{formatear_dinero(total.total_bonos_empresa)}\n" <>
-      "  Transporte: $#{formatear_dinero(total.total_transporte)}\n" <>
-      "  Total neto pagado: $#{formatear_dinero(total.total_pagado)}\n" <>
-      "  Costo promedio por litro: $#{formatear_dinero(total.costo_promedio_litro)}"
-  end
-
-  defp formatear_dinero(valor) when is_number(valor) do
-    str = :erlang.float_to_binary(valor * 1.0, decimals: 2)
-    [entera, decimal] = String.split(str, ".")
-    "#{formatear_numero(entera)}.#{decimal}"
-  end
-  defp formatear_dinero(valor), do: to_string(valor)
-
-  defp formatear_numero(valor) when is_number(valor) or is_binary(valor) do
-    valor
-    |> to_string()
-    |> String.replace(~r/\B(?=(\d{3})+(?!\d))/, ".")
+      "  Total bruto: $#{Util.formatear_dinero(total.total_bruto)}\n" <>
+      "  Bonificaciones: $#{Util.formatear_dinero(total.total_bonos_empresa)}\n" <>
+      "  Transporte: $#{Util.formatear_dinero(total.total_transporte)}\n" <>
+      "  Total neto pagado: $#{Util.formatear_dinero(total.total_pagado)}\n" <>
+      "  Costo promedio por litro: $#{Util.formatear_dinero(total.costo_promedio_litro)}"
   end
 
   defp render_productores_todos_los_tanques(productores) do
