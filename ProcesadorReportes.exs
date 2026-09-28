@@ -1,11 +1,30 @@
 defmodule ProcesadorReportes do
-  def generar_reporte(entregas, tanques, productores, meta_diaria) do
+  @meta_diaria 2000
+  def generar_reporte(entregas, entregas_rechazadas, tanques, productores) do
     %{
+      entregas_rechazadas: generar_reporte_entregas_rechazadas(entregas_rechazadas),
       tanques: generar_reporte_tanques(entregas, tanques),
-      litros_por_dia: generar_reporte_litros_recibidos_dias(entregas, meta_diaria),
+      litros_por_dia: generar_reporte_litros_recibidos_dias(entregaa),
+      liquidaciones: generar_reporte_liquidaciones_ordenado(entregas),
       productor_mas_litros: generar_reporte_productor_mas_litros_entregados(entregas, productores),
+      total_pagado: generar_reporte_total_pagado(entregas, productores),
+      productor_mejor_calidad: generar_reporte_productor_mejor_calidad(entregas, productores),
       productores_en_todos_los_tanques: productores_en_todos_los_tanques(entregas, tanques, productores)
     }
+  end
+  # R1
+  defp generar_reporte_entregas_rechazadas(entregas_rechazadas) do
+    conteo_por_motivo =
+      entregas_rechazadas
+      |> Enum.map(fn rechazada -> rechazada.motivo end)
+      |> Enum.frequencies()
+
+      %{
+        total_rechazos: length(entregas_rechazadas),
+        detalle: entregas_rechazadas,
+        conteo_por_motivo: conteo_por_motivo
+      }
+
   end
 
   # R2
@@ -35,7 +54,7 @@ defmodule ProcesadorReportes do
   end
 
   # R3
-  defp generar_reporte_litros_recibidos_dias(entregas, meta) do
+  defp generar_reporte_litros_recibidos_dias(entregas) do
     litros_por_dia =
       Enum.reduce(entregas, %{}, fn entrega, acumulador ->
         Map.update(acumulador, entrega.dia, entrega.litros, fn suma -> suma + entrega.litros end)
@@ -48,7 +67,7 @@ defmodule ProcesadorReportes do
         %{
           dia: dia,
           litros: total,
-          alcanzo_meta: if(total >= meta, do: "Sí", else: "No")
+          alcanzo_meta: if(total >= @meta_diaria, do: "Sí", else: "No")
         }
       end)
 
@@ -65,6 +84,12 @@ defmodule ProcesadorReportes do
         cumplio_al_menos_un_dia: cumplio_al_menos_un_dia
       }
     }
+  end
+
+  #R4
+  defp generar_reporte_liquidaciones_ordenado(entregas, productores) do
+    liquidaciones = Liquidacion.liquidar_todos(productores, entregas)
+    Util.ordenar_coleccion(liquidaciones, :desc, fn liquidacion -> liquidacion.neto end)
   end
 
   # R5
@@ -131,6 +156,59 @@ defmodule ProcesadorReportes do
       |> Enum.map(fn {nombre, victorias} -> "#{nombre} (#{victorias} días)" end)
       |> Enum.join(", ")
     end
+  end
+
+  #R6
+  defp generar_reporte_productor_mejor_calidad(entregas, productores) do
+    candidatos =
+      entregas
+      |> Enum.group_by(fn entrega -> entrega.productor end)
+      |> Enum.filter(fn {_cod, lista_entregas} -> length(lista_entregas) >= 3 end)
+      |> Enum.map(fn{cod_productor, lista_entregas} ->
+        grasa_ponderada = CalidadLeche.calcular_grasa_ponderada(lista_entregas)
+        info_productor = Enum.find(productores, fn productor -> productor.codigo == cod_productor end)
+
+        %{
+          productor: info_productor,
+          grasa_ponderada: Float.roud(grasa_ponderada, 2),
+          total_entregas: length(lista_entregas)
+        }
+    end)
+
+    if candidatos == [] do
+      nil
+    else
+      max_grasa = Enum.max_by(candidatos, & &1.grasa_ponderada).grasa_ponderada
+      Enum.filter(candidatos, fn candidato -> candidato.grasa_ponderada == max_grasa end)
+    end
+
+  end
+
+  #R7
+  defp generar_reporte_total_pagado(entregas, productores) do
+    liquidaciones = Liquidacion.liquidar_todos(productores, entregas)
+
+    total_litros_empresa = Enum.sum(Enum.map(liquidaciones, & &1.litros))
+    total_bruto_empresa = Enum.sum(Enum.map(liquidaciones, & &1.valor_entregas))
+    total_bonos_empresa = Enum.sum(Enum.map(liquidaciones, & &1.bonificaciones))
+    total_transporte_empresa = Enum.sum(Enum.map(liquidaciones, & &1.transporte))
+    total_neto_pagado = Enum.sum(Enum.map(liquidaciones, & &1.neto))
+
+    costo_promedio_litro =
+      if total_litros_empresa > 0 do
+        Float.round(total_neto_pagado / total_litros_empresa, 2)
+      else
+        0.0
+      end
+
+    %{
+      total_litros: total_litros_empresa,
+      total_bruto: total_bruto_empresa,
+      total_bonos_empresa: total_bonos_empresa,
+      total_transporte: total_transporte_empresa,
+      total_pagado: total_neto_pagado,
+      costo_promedio_litro: costo_promedio_litro
+    }
   end
 
   # R8
