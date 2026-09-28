@@ -8,16 +8,6 @@ defmodule ValidacionRegistro do
   # (productor;tanque;dia;litros;grasa)
 
   @doc """
-  Solicita un registro por consola y muestra el resultado de su validación.
-  """
-  def main do
-    entrada = Util.ingresar("Ingrese una entrega adicional: ", :texto)
-
-    validar_registro(entrada)
-    |> IO.inspect()
-  end
-
-  @doc """
   Convierte y valida un registro de texto separado por punto y coma.
 
   Retorna `{:ok, entrega}` cuando el formato es válido, `{:ok, :omitida}`
@@ -55,6 +45,8 @@ defmodule ValidacionRegistro do
     end
   end
 
+  # Validaciones de entrada del usuario
+
   defp validar_no_vacio(texto) do
     if String.length(texto) > 0, do: :ok, else: :error
   end
@@ -79,5 +71,3 @@ defmodule ValidacionRegistro do
     end
   end
 end
-
-ValidacionRegistro.main()

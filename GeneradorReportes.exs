@@ -46,6 +46,8 @@ defmodule ImpresorReportes do
     """
   end
 
+  # Desestructura el mapa de entregas rechazadas y muestra cada una
+  # Además enumera la cantidad de motivos de rechazos
   defp render_entregas_rechazadas(%{total_rechazos: total, detalle: detalle, conteo_por_motivo: conteo}) do
     detalle_texto =
       case detalle do
@@ -67,9 +69,11 @@ defmodule ImpresorReportes do
       detalle_texto <> "\n  Conteo por motivo:\n" <> motivos_texto
   end
 
+  # Formatea el motivo que viene como clave en formato snake_case
   defp formatear_motivo(motivo) when is_atom(motivo), do: motivo |> Atom.to_string() |> String.replace("_", " ")
   defp formatear_motivo(motivo), do: to_string(motivo)
 
+  # Muestran la información de los tanques como su nombre, capacidad, etc...
   defp render_tanques([]), do: "  No hay datos de tanques."
   defp render_tanques(tanques) do
     tanques
@@ -79,24 +83,30 @@ defmodule ImpresorReportes do
     |> Enum.join()
   end
 
+  # Muestran los litros por dia y si se cumplió no la meta diaria
   defp render_litros_por_dia(%{detalle_diario: detalle, resumen: resumen}) do
     texto_detalle =
       detalle
       |> Util.convertir_coleccion_mensaje(fn r ->
-        "  - Día #{r.dia}: #{r.litros} L #{if r.alcanzo_meta == "Sí", do: "(cumplió meta)", else: "(no cumplió)"}\n"
+        estado_meta = if r.alcanzo_meta, do: "cumplió meta", else: "no cumplió"
+        "  - Día #{r.dia}: #{r.litros} L (#{estado_meta})\n"
       end)
       |> Enum.join()
 
     texto_resumen =
       """
       Resumen:
-        - Cumplió todos los días: #{resumen.cumplio_todos_los_dias}
-        - Cumplió al menos un día: #{resumen.cumplio_al_menos_un_dia}
+        - Cumplió todos los días: #{formatear_booleano(resumen.cumplio_todos_los_dias)}
+        - Cumplió al menos un día: #{formatear_booleano(resumen.cumplio_al_menos_un_dia)}
       """
 
     texto_detalle <> "\n" <> texto_resumen
   end
 
+  defp formatear_booleano(true), do: "Sí"
+  defp formatear_booleano(false), do: "No"
+
+  #Muestra al productor con mas litros entregados cada día y a quien o quienes ocuparon el primer lugar más dias
   defp render_productor_mas_litros(%{detalle_diario: detalle, productor_mas_dias: ganador}) do
     if detalle == [] do
       "  No hay información."
@@ -113,6 +123,7 @@ defmodule ImpresorReportes do
     end
   end
 
+  # Muestra las liquidaciones de cada productor
   defp render_liquidaciones([]), do: "  No hay liquidaciones."
   defp render_liquidaciones(liquidaciones) do
     liquidaciones
@@ -127,6 +138,7 @@ defmodule ImpresorReportes do
     |> Enum.join("\n")
   end
 
+  # Muestra al productor con mejor calidad
   defp render_productor_mejor_calidad(nil), do: "  No hay productores con al menos 3 entregas."
   defp render_productor_mejor_calidad(productores) do
     productores
@@ -137,6 +149,7 @@ defmodule ImpresorReportes do
     |> Enum.join("\n")
   end
 
+  # Muestra el total pagado por el centro de acopio
   defp render_total_pagado(total) do
     "  Litros totales: #{total.total_litros}\n" <>
       "  Total bruto: $#{Util.formatear_dinero(total.total_bruto)}\n" <>
@@ -146,6 +159,7 @@ defmodule ImpresorReportes do
       "  Costo promedio por litro: $#{Util.formatear_dinero(total.costo_promedio_litro)}"
   end
 
+  # Muestra a los productores que realizaron al menos una entrega válida en todos los tanques
   defp render_productores_todos_los_tanques(productores) do
     case productores do
       [] ->

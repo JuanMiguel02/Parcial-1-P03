@@ -7,9 +7,9 @@ defmodule Datos do
       %{codigo: "P04", nombre: "Julian Casablancas", transporte: true},
       %{codigo: "P05", nombre: "Ana Martínez", transporte: true},
       %{codigo: "P06", nombre: "Carlos Restrepo", transporte: false},
-      %{codigo: "P07", nombre: "Elena Naranjo", transporte: false},
+      %{codigo: "P07", nombre: "Paul Banks", transporte: false},
       %{codigo: "P08", nombre: "Roberto Gómez", transporte: false},
-      %{codigo: "P09", nombre: "Sofia Vergara", transporte: true},
+      %{codigo: "P09", nombre: "Chino Moreno", transporte: true},
       %{codigo: "P10", nombre: "Alex Turner", transporte: false}
     ]
   end
@@ -45,6 +45,7 @@ def entregas do
     %{productor: "P06", tanque: "T4", dia: 1, litros: 255, grasa: 3.9},
     %{productor: "P07", tanque: "T3", dia: 1, litros: 250, grasa: 4.0},
     %{productor: "P07", tanque: "T4", dia: 1, litros: 270, grasa: 4.1},
+    %{productor: "P07", tanque: "T4", dia: 1, litros: 220, grasa: 2.1},
 
     # --- Día 2 ---
     %{productor: "P01", tanque: "T1", dia: 2, litros: 145, grasa: 2.8},
