@@ -4,14 +4,17 @@ defmodule ProcesadorReportes do
     %{
       entregas_rechazadas: generar_reporte_entregas_rechazadas(entregas_rechazadas),
       tanques: generar_reporte_tanques(entregas, tanques),
-      litros_por_dia: generar_reporte_litros_recibidos_dias(entregaa),
-      liquidaciones: generar_reporte_liquidaciones_ordenado(entregas),
-      productor_mas_litros: generar_reporte_productor_mas_litros_entregados(entregas, productores),
+      litros_por_dia: generar_reporte_litros_recibidos_dias(entregas),
+      liquidaciones: generar_reporte_liquidaciones_ordenado(entregas, productores),
+      productor_mas_litros:
+        generar_reporte_productor_mas_litros_entregados(entregas, productores),
       total_pagado: generar_reporte_total_pagado(entregas, productores),
       productor_mejor_calidad: generar_reporte_productor_mejor_calidad(entregas, productores),
-      productores_en_todos_los_tanques: productores_en_todos_los_tanques(entregas, tanques, productores)
+      productores_en_todos_los_tanques:
+        productores_en_todos_los_tanques(entregas, tanques, productores)
     }
   end
+
   # R1
   defp generar_reporte_entregas_rechazadas(entregas_rechazadas) do
     conteo_por_motivo =
@@ -19,12 +22,11 @@ defmodule ProcesadorReportes do
       |> Enum.map(fn rechazada -> rechazada.motivo end)
       |> Enum.frequencies()
 
-      %{
-        total_rechazos: length(entregas_rechazadas),
-        detalle: entregas_rechazadas,
-        conteo_por_motivo: conteo_por_motivo
-      }
-
+    %{
+      total_rechazos: length(entregas_rechazadas),
+      detalle: entregas_rechazadas,
+      conteo_por_motivo: conteo_por_motivo
+    }
   end
 
   # R2
@@ -86,7 +88,7 @@ defmodule ProcesadorReportes do
     }
   end
 
-  #R4
+  # R4
   defp generar_reporte_liquidaciones_ordenado(entregas, productores) do
     liquidaciones = Liquidacion.liquidar_todos(productores, entregas)
     Util.ordenar_coleccion(liquidaciones, :desc, fn liquidacion -> liquidacion.neto end)
@@ -148,7 +150,7 @@ defmodule ProcesadorReportes do
           Map.update(acc, ganador.nombre, 1, fn cantidad -> cantidad + 1 end)
         end)
 
-      {ganador, max_victorias} =
+      {_ganador, max_victorias} =
         Enum.max_by(victorias_por_productor, fn {_nombre, victorias} -> victorias end)
 
       victorias_por_productor
@@ -158,22 +160,24 @@ defmodule ProcesadorReportes do
     end
   end
 
-  #R6
+  # R6
   defp generar_reporte_productor_mejor_calidad(entregas, productores) do
     candidatos =
       entregas
       |> Enum.group_by(fn entrega -> entrega.productor end)
       |> Enum.filter(fn {_cod, lista_entregas} -> length(lista_entregas) >= 3 end)
-      |> Enum.map(fn{cod_productor, lista_entregas} ->
+      |> Enum.map(fn {cod_productor, lista_entregas} ->
         grasa_ponderada = CalidadLeche.calcular_grasa_ponderada(lista_entregas)
-        info_productor = Enum.find(productores, fn productor -> productor.codigo == cod_productor end)
+
+        info_productor =
+          Enum.find(productores, fn productor -> productor.codigo == cod_productor end)
 
         %{
           productor: info_productor,
-          grasa_ponderada: Float.roud(grasa_ponderada, 2),
+          grasa_ponderada: Float.round(grasa_ponderada, 2),
           total_entregas: length(lista_entregas)
         }
-    end)
+      end)
 
     if candidatos == [] do
       nil
@@ -181,10 +185,9 @@ defmodule ProcesadorReportes do
       max_grasa = Enum.max_by(candidatos, & &1.grasa_ponderada).grasa_ponderada
       Enum.filter(candidatos, fn candidato -> candidato.grasa_ponderada == max_grasa end)
     end
-
   end
 
-  #R7
+  # R7
   defp generar_reporte_total_pagado(entregas, productores) do
     liquidaciones = Liquidacion.liquidar_todos(productores, entregas)
 

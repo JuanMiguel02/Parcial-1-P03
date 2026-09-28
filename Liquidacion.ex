@@ -59,6 +59,7 @@ defmodule Liquidacion do
       0
     end
   end
+
   @doc """
     Liquida el pago total semanal de un productor individual.
 
@@ -71,6 +72,26 @@ defmodule Liquidacion do
   def liquidar_productor(productor, entregas_validas) do
     entregas_p = Enum.filter(entregas_validas, fn entrega -> entrega.productor == productor.codigo end)
 
+    detalle_dias =
+      entregas_p
+      |> Enum.group_by(fn entrega -> entrega.dia end)
+      |> Enum.map(fn {dia, entregas_del_dia } ->
+        litros_dia = Enum.sum(Enum.map(entregas_del_dia, & &1.litros))
+        valor_dia = Enum.sum(Enum.map(entregas_del_dia, &valor_entrega/1))
+        bono_dia = bonificacion_volumen(entregas_del_dia)
+        transporte_dia = if productor.transporte, do: @costo_transporte, else: 0
+
+      %{
+        dia: dia,
+        cantidad_entregas: length(entregas_del_dia),
+        litros: litros_dia,
+        valor_entregas: valor_dia,
+        bonificacion: bono_dia,
+        transporte: transporte_dia
+      }
+      end)
+      |> Util.ordenar_coleccion(:asc, fn d -> d.dia end)
+
     litros_totales = Enum.reduce(entregas_p, 0, fn entrega, ac -> ac + entrega.litros end)
     valor_entregas = Enum.reduce(entregas_p, 0, fn entrega, ac -> ac + valor_entrega(entrega) end)
     bonificaciones = bonificacion_volumen(entregas_p)
@@ -80,6 +101,8 @@ defmodule Liquidacion do
     %{
       codigo: productor.codigo,
       nombre: productor.nombre,
+      detalle_dias: detalle_dias,
+      total_entregas: length(entregas_p),
       litros: litros_totales,
       valor_entregas: valor_entregas,
       bonificaciones: bonificaciones,
@@ -95,4 +118,5 @@ defmodule Liquidacion do
   def liquidar_todos(productores, entregas_validas) do
     Enum.map(productores, fn productor -> liquidar_productor(productor, entregas_validas) end)
   end
+
 end
