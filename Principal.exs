@@ -1,5 +1,70 @@
+#Cargar las dependencias automáticamente
+Code.require_file("Util.ex")
+Code.require_file("Datos.exs")
+Code.require_file("CalidadLeche.exs")
+Code.require_file("Liquidacion.exs")
+Code.require_file("ValidacionRegistro.exs")
+Code.require_file("Validador.exs")
+Code.require_file("ProcesadorReportes.exs")
+Code.require_file("GeneradorReportes.exs")
+Code.require_file("GeneradorComprobante.exs")
+Code.require_file("Investigacion.exs")
+
 defmodule CentroAcopioLeche do
+  @moduledoc """
+    Módulo principal del Centro de Acopio de Leche.
+
+    Se encarga de: lectura de datos, ingreso de entrega opcional,
+    validación de registros, generación del reporte general, emisión de comprobante
+    individual y demostración de combinación de mapas con Map.merge/3.
+  """
   def main do
 
-  end
+    productores = Datos.productores()
+    tanques = Datos.tanques()
+    entregas_iniciales = Datos.entregas()
+
+    entregas_totales = solicitar_entrega_adicional(entregas_iniciales)
+
+    {validas, invalidas} = Validador.clasificar_entregas(entregas_totales, productores, tanques)
+
+    rechazadas = Enum.map(invalidas, fn {entrega, motivo} -> Map.put(entrega, :motivo, motivo) end)
+
+    reporte = ProcesadorReportes.generar_reporte(validas, rechazadas, tanques, productores)
+    Util.mostrar(ImpresorReportes.mostrar(reporte), :mensaje)
+
+    solicitar_y_mostrar_comprobante(productores, validas)
+
+    Investigacion.demostrar_combinacion(reporte.litros_por_dia)
+
+
 end
+    #FUNCIONES PRIVADAS
+    defp solicitar_entrega_adicional(entregas_actuales) do
+      entrada = "Ingrese una entrega adicional (productor;tanque;dia;litros;grasa) o Enter para omitir: "
+      |> Util.ingresar(:texto)
+
+      case ValidacionRegistro.validar_registro(entrada) do
+        {:ok, :omitida} ->
+          Util.mostrar("Se omitió el ingreso de la entrega adicional.\n", :mensaje)
+          entregas_actuales
+
+        {:ok, nueva_entrega} ->
+          Util.mostrar("Entrega adicional registrada correctamente.\n", :mensaje)
+          entregas_actuales ++ [nueva_entrega]
+
+        {:error, :formato_invalido} ->
+          Util.mostrar("Error: Formato inválido. Se continuará con los datos iniciales.\n", :error)
+          entregas_actuales
+      end
+    end
+
+    defp solicitar_y_mostrar_comprobante(productores, entregas_validas) do
+      "\nIngrese el código del productor para generar su comprobante: "
+      |> Util.ingresar(:texto)
+      |> GeneradorComprobante.generar_comprobante_productor(productores, entregas_validas)
+      |> Util.mostrar(:mensaje)
+    end
+
+end
+CentroAcopioLeche.main()
