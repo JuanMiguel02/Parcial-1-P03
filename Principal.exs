@@ -1,14 +1,17 @@
+# Juan Miguel Henao Gaviria
+# Valeria Zapata Giraldo
 #Cargar las dependencias automáticamente
+Code.require_file("Configuracion.exs")
 Code.require_file("Util.ex")
 Code.require_file("Datos.exs")
 Code.require_file("CalidadLeche.exs")
 Code.require_file("Liquidacion.exs")
 Code.require_file("ValidacionRegistro.exs")
 Code.require_file("Validador.exs")
-Code.require_file("ProcesadorReportes.exs")
-Code.require_file("GeneradorReportes.exs")
-Code.require_file("GeneradorComprobante.exs")
-Code.require_file("Investigacion.exs")
+Code.require_file("ProcesamientoReportes.exs")
+Code.require_file("GeneracionReportes.exs")
+Code.require_file("GeneracionComprobante.exs")
+Code.require_file("CombinacionInformacionCentroVecino.exs")
 
 defmodule CentroAcopioLeche do
   @moduledoc """
@@ -30,12 +33,12 @@ defmodule CentroAcopioLeche do
 
     rechazadas = Enum.map(invalidas, fn {entrega, motivo} -> Map.put(entrega, :motivo, motivo) end)
 
-    reporte = ProcesadorReportes.generar_reporte(validas, rechazadas, tanques, productores)
-    Util.mostrar(ImpresorReportes.mostrar(reporte), :mensaje)
+    reporte = ProcesamientoReportes.generar_reporte(validas, rechazadas, tanques, productores)
+    Util.mostrar(GeneracionReportes.mostrar(reporte), :mensaje)
 
     solicitar_y_mostrar_comprobante(productores, validas)
 
-    Investigacion.demostrar_combinacion(reporte.litros_por_dia)
+    CombinacionLitros.demostrar_combinacion(reporte.litros_por_dia)
 
 
 end
@@ -62,7 +65,7 @@ end
     defp solicitar_y_mostrar_comprobante(productores, entregas_validas) do
       "\nIngrese el código del productor para generar su comprobante: "
       |> Util.ingresar(:texto)
-      |> GeneradorComprobante.generar_comprobante_productor(productores, entregas_validas)
+      |> GeneracionComprobante.generar_comprobante_productor(productores, entregas_validas)
       |> Util.mostrar(:mensaje)
     end
 

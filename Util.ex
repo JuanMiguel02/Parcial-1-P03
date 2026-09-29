@@ -1,3 +1,5 @@
+# Juan Miguel Henao Gaviria
+# Valeria Zapata Giraldo
 defmodule Util do
   @moduledoc """
   Funciones auxiliares reutilizables para entrada, salida y transformación de datos.

@@ -1,4 +1,6 @@
-defmodule Investigacion do
+# Juan Miguel Henao Gaviria
+# Valeria Zapata Giraldo
+defmodule CombinacionLitros do
   @moduledoc """
   Módulo para resolver el punto de investigación sobre:
   combinación de información entre centros de acopio mediante Map.merge/3.

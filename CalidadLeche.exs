@@ -1,3 +1,5 @@
+# Juan Miguel Henao Gaviria
+# Valeria Zapata Giraldo
 defmodule CalidadLeche do
   @moduledoc """
   Proporciona cálculos relacionados con la calidad de la leche entregada.

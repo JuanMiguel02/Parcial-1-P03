@@ -1,3 +1,5 @@
+# Juan Miguel Henao Gaviria
+# Valeria Zapata Giraldo
 defmodule GeneracionReportes do
   @moduledoc """
   Convierte los datos procesados de los reportes en un resumen de texto.
@@ -105,16 +107,6 @@ defmodule GeneracionReportes do
     texto_detalle <> "\n" <> texto_resumen
   end
 
-  defp render_produccion_litros_combinada(litros_combinados) do
-  litros_combinados
-  |> Util.ordenar_coleccion(:asc, fn {dia, _litros} -> dia end)
-  |> Util.convertir_coleccion_mensaje(fn {dia, litros} ->
-    "  • Día #{String.pad_leading(to_string(dia), 2)}: #{Util.formatear_numero(litros)} L\n"
-  end)
-  |> Enum.join()
-  |> String.trim_trailing()
-end
-
   defp formatear_booleano(true), do: "Sí"
   defp formatear_booleano(false), do: "No"
 
@@ -145,7 +137,7 @@ end
         "      Valor de entregas: $#{Util.formatear_dinero(liquidacion.valor_entregas)}\n" <>
         "      Bonificaciones: $#{Util.formatear_dinero(liquidacion.bonificaciones)}\n" <>
         "      Transporte: $#{Util.formatear_dinero(liquidacion.transporte)}\n" <>
-        "      Neto: $#{Util.formatear_dinero(liquidacion.neto)}"
+        "      Neto: $#{Util.formatear_dinero(liquidacion.neto)} \n"
     end)
     |> Enum.join("\n")
   end

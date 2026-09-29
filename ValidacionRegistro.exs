@@ -1,3 +1,5 @@
+# Juan Miguel Henao Gaviria
+# Valeria Zapata Giraldo
 defmodule ValidacionRegistro do
   @moduledoc """
   Valida registros de entrega introducidos como texto.

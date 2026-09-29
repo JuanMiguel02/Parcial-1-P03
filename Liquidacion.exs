@@ -1,3 +1,5 @@
+# Juan Miguel Henao Gaviria
+# Valeria Zapata Giraldo
 defmodule Liquidacion do
   @moduledoc """
   Calcula los valores económicos y las liquidaciones de los productores.

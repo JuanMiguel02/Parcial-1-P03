@@ -1,3 +1,5 @@
+# Juan Miguel Henao Gaviria
+# Valeria Zapata Giraldo
 defmodule GeneracionComprobante do
   @moduledoc """
   Genera comprobantes de liquidación individuales para los productores.

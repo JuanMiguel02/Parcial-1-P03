@@ -1,3 +1,5 @@
+# Juan Miguel Henao Gaviria
+# Valeria Zapata Giraldo
 defmodule ProcesamientoReportes do
   @moduledoc """
   Genera los reportes estadísticos y financieros del centro de acopio.
@@ -6,15 +8,13 @@ defmodule ProcesamientoReportes do
   devuelve un mapa con la información necesaria para su impresión.
   """
 
-  @meta_diaria 2000
-
   @doc """
   Genera el conjunto completo de reportes de la operación semanal.
 
   Las entregas rechazadas deben incluir el campo `:motivo`. Las entregas
   recibidas en `entregas` deben haber sido validadas previamente.
   """
-  def generar_reporte(entregas, entregas_rechazadas, tanques, productores, litros_centro_vecino) do
+  def generar_reporte(entregas, entregas_rechazadas, tanques, productores) do
    %{
     entregas_rechazadas: generar_reporte_entregas_rechazadas(entregas_rechazadas),
     tanques: generar_reporte_tanques(entregas, tanques),
@@ -53,7 +53,13 @@ defmodule ProcesamientoReportes do
     ocupacion_tanques =
       Enum.map(tanques, fn tanque ->
         litros_actuales = Map.get(litros_por_tanque, tanque.id, 0)
-        porcentaje_ocupacion = Float.round(litros_actuales / tanque.capacidad * 100, 2)
+
+        porcentaje_ocupacion =
+          if tanque.capacidad > 0 do
+            Float.round(litros_actuales / tanque.capacidad * 100, 2)
+        else
+          0.0
+        end
 
         %{
           id_tanque: tanque.id,
@@ -76,13 +82,13 @@ defmodule ProcesamientoReportes do
       end)
 
     reporte =
-      Enum.map(1..6, fn dia ->
+      Enum.map(Parametros.dias_recepcion(), fn dia ->
         total = Map.get(litros_por_dia, dia, 0)
 
         %{
           dia: dia,
           litros: total,
-          alcanzo_meta: total >= @meta_diaria
+          alcanzo_meta: total >= Parametros.meta_diaria_centro()
         }
       end)
 
@@ -113,11 +119,11 @@ defmodule ProcesamientoReportes do
     }
   end
 
-  # Función auxiliar de R5 que devuelve a los productores que más litros entregaron por día
-  defp calcular_ganadores_diarios(entregas, productores) do
+  #Función auxiliar de R5 que devuelve al productor o los productores que más litros entregaron en más días
+   defp calcular_ganadores_diarios(entregas, productores) do
     entregas_por_dia = Enum.group_by(entregas, fn e -> e.dia end)
 
-    Enum.map(1..6, fn dia ->
+    Enum.map(Parametros.dias_recepcion(), fn dia ->
       entregas_del_dia = Map.get(entregas_por_dia, dia, [])
 
       if entregas_del_dia == [] do
@@ -148,7 +154,7 @@ defmodule ProcesamientoReportes do
     end)
   end
 
-  #Función auxiliar de R5 que devuelve al productor o los productores que más litros entregaron en más días
+   #Función auxiliar de R5 que devuelve al productor o los productores que más litros entregaron en más días
   defp calcular_ganador_frecuente(reporte_diario) do
     ganadores =
       reporte_diario

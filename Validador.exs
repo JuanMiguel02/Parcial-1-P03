@@ -1,3 +1,5 @@
+# Juan Miguel Henao Gaviria
+# Valeria Zapata Giraldo
 defmodule Validador do
 
   @doc """
@@ -52,11 +54,21 @@ defmodule Validador do
     end
   end
 
-  defp verificar_dia(dia) when is_integer(dia) and dia in 1..6, do: {:ok, dia}
-  defp verificar_dia(_), do: {:error, :dia_invalido}
+  defp verificar_dia(dia) do
+    if is_integer(dia) and Enum.member?(Parametros.dias_recepcion(), dia) do
+      {:ok, dia}
+    else
+      {:error, :dia_invalido}
+    end
+  end
 
-  defp verificar_litros(litros) when is_number(litros) and litros > 0 and litros <= 800, do: {:ok, litros}
-  defp verificar_litros(_), do: {:error, :litros_fuera_de_rango}
+  defp verificar_litros(litros) do
+    if is_number(litros) and litros > 0 and litros <= Parametros.maximo_litros_entrega() do
+      {:ok, litros}
+    else
+      {:error, :litros_fuera_de_rango}
+    end
+  end
 
   defp verificar_grasa(grasa) when is_number(grasa) and grasa >= 0 and grasa <= 15, do: {:ok, grasa}
   defp verificar_grasa(_), do: {:error, :porcentaje_invalido}
