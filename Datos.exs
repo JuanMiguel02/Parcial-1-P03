@@ -75,7 +75,6 @@ defmodule Datos do
       %{productor: "P04", tanque: "T3", dia: 3, litros: 235, grasa: 3.6},
       %{productor: "P04", tanque: "T4", dia: 3, litros: 255, grasa: 3.7},
 
-      # CHINO - entrega grande con grasa alta
       %{productor: "P09", tanque: "T4", dia: 3, litros: 800, grasa: 6.5},
       %{productor: "P10", tanque: "T1", dia: 3, litros: 20, grasa: 2.0},
       %{productor: "P10", tanque: "T2", dia: 3, litros: 300, grasa: 4.7},

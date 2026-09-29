@@ -1,16 +1,16 @@
-defmodule ImpresorReportes do
+defmodule GeneracionReportes do
   @moduledoc """
   Convierte los datos procesados de los reportes en un resumen de texto.
 
   El módulo no calcula información de negocio; únicamente organiza y presenta
-  los resultados generados por `ProcesadorReportes`.
+  los resultados generados por `ProcesamientoReportes`.
   """
 
   @doc """
   Genera el reporte general en formato de texto.
 
   El mapa recibido debe contener las claves generadas por
-  `ProcesadorReportes.generar_reporte/4`. El resultado puede imprimirse con
+  `ProcesamientoReportes.generar_reporte/5`. El resultado puede imprimirse con
   `IO.puts/1` o utilizarse como texto para otro medio de salida.
   """
   @spec mostrar(map()) :: String.t()
@@ -29,22 +29,19 @@ defmodule ImpresorReportes do
     3) Producción por día
     #{render_litros_por_dia(reporte.litros_por_dia)}
 
-    4) Combinación de litros con el centro vecino
-    #{render_produccion_litros_combinada(reporte.combinacion_litros_centro_vecino)}
-
-    5) Liquidaciones
+    4) Liquidaciones
     #{render_liquidaciones(reporte.liquidaciones)}
 
-    6) Productor con más litros
+    5) Productor con más litros
     #{render_productor_mas_litros(reporte.productor_mas_litros)}
 
-    7) Productor con mejor calidad
+    6) Productor con mejor calidad
     #{render_productor_mejor_calidad(reporte.productor_mejor_calidad)}
 
-    8) Total pagado
+    7) Total pagado
     #{render_total_pagado(reporte.total_pagado)}
 
-    9) Productores en todos los tanques
+    8) Productores en todos los tanques
     #{render_productores_todos_los_tanques(reporte.productores_en_todos_los_tanques)}
     """
   end

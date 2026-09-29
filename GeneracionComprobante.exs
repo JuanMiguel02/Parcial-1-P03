@@ -1,4 +1,4 @@
-defmodule GeneradorComprobante do
+defmodule GeneracionComprobante do
   @moduledoc """
   Genera comprobantes de liquidación individuales para los productores.
   """

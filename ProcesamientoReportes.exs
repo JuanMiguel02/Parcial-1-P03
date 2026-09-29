@@ -1,4 +1,4 @@
-defmodule ProcesadorReportes do
+defmodule ProcesamientoReportes do
   @moduledoc """
   Genera los reportes estadísticos y financieros del centro de acopio.
 
@@ -15,14 +15,11 @@ defmodule ProcesadorReportes do
   recibidas en `entregas` deben haber sido validadas previamente.
   """
   def generar_reporte(entregas, entregas_rechazadas, tanques, productores, litros_centro_vecino) do
-   # 1. Generamos primero el reporte de litros por día (R3)
-    reporte_litros_por_dia = generar_reporte_litros_recibidos_dias(entregas)
    %{
     entregas_rechazadas: generar_reporte_entregas_rechazadas(entregas_rechazadas),
     tanques: generar_reporte_tanques(entregas, tanques),
-    litros_por_dia: reporte_litros_por_dia,
+    litros_por_dia: generar_reporte_litros_recibidos_dias(entregas),
     liquidaciones: generar_reporte_liquidaciones_ordenado(entregas, productores),
-    combinacion_litros_centro_vecino: combinar_información_litros_con_centro_vecino(reporte_litros_por_dia, litros_centro_vecino),
     productor_mas_litros: generar_reporte_productor_mas_litros_entregados(entregas, productores),
     total_pagado: generar_reporte_total_pagado(entregas, productores),
     productor_mejor_calidad: generar_reporte_productor_mejor_calidad(entregas, productores),
@@ -71,7 +68,7 @@ defmodule ProcesadorReportes do
   end
 
   # R3 Genera el reporte de los Litros recibidos por el centro en cada uno de los 6 días
-  # e indicac de si se alcanzó la meta diaria
+  # e indicación de si se alcanzó la meta diaria
   defp generar_reporte_litros_recibidos_dias(entregas) do
     litros_por_dia =
       Enum.reduce(entregas, %{}, fn entrega, acumulador ->
@@ -96,16 +93,6 @@ defmodule ProcesadorReportes do
         cumplio_al_menos_un_dia: Enum.any?(reporte, fn %{alcanzo_meta: valor} -> valor end)
       }
     }
-  end
-
-  defp combinar_información_litros_con_centro_vecino(resultado_r3, litros_centro_vecino) do
-    litros_locales =
-      resultado_r3.detalle_diario
-      |> Map.new(fn reporte -> {reporte.dia, reporte.litros} end)
-
-    Map.merge(litros_locales, litros_centro_vecino, fn _dia, litros_locales, litros_centro_vecino ->
-      litros_locales + litros_centro_vecino
-    end )
   end
 
   # R4 Genera el reporte de las liquidaciones de los productores de mayor a menor
