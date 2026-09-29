@@ -32,11 +32,11 @@ defmodule Liquidacion do
         true -> -0.20
       end
 
-      ajuste =  bruto * porcentaje
-      bruto + ajuste
+    ajuste = bruto * porcentaje
+    bruto + ajuste
   end
 
-  #FUNCIONES PRIVADAS PARA CALCULAR LIQUIDACIONES
+  # FUNCIONES PRIVADAS PARA CALCULAR LIQUIDACIONES
 
   defp dias_con_entrega(entregas_productor) do
     entregas_productor
@@ -77,27 +77,10 @@ defmodule Liquidacion do
     Retorna un mapa con el detalle financiero del productor.
   """
   def liquidar_productor(productor, entregas_validas) do
-    entregas_p = Enum.filter(entregas_validas, fn entrega -> entrega.productor == productor.codigo end)
+    entregas_p =
+      Enum.filter(entregas_validas, fn entrega -> entrega.productor == productor.codigo end)
 
-    detalle_dias =
-      entregas_p
-      |> Enum.group_by(fn entrega -> entrega.dia end)
-      |> Enum.map(fn {dia, entregas_del_dia } ->
-        litros_dia = Enum.sum(Enum.map(entregas_del_dia, & &1.litros))
-        valor_dia = Enum.sum(Enum.map(entregas_del_dia, &valor_entrega/1))
-        bono_dia = bonificacion_volumen(entregas_del_dia)
-        transporte_dia = if productor.transporte, do: @costo_transporte, else: 0
-
-      %{
-        dia: dia,
-        cantidad_entregas: length(entregas_del_dia),
-        litros: litros_dia,
-        valor_entregas: valor_dia,
-        bonificacion: bono_dia,
-        transporte: transporte_dia
-      }
-      end)
-      |> Util.ordenar_coleccion(:asc, fn d -> d.dia end)
+    detalle_dias = calcular_detalle_dias_entrega(entregas_p, productor)
 
     litros_totales = Enum.reduce(entregas_p, 0, fn entrega, ac -> ac + entrega.litros end)
     valor_entregas = Enum.reduce(entregas_p, 0, fn entrega, ac -> ac + valor_entrega(entrega) end)
@@ -118,6 +101,28 @@ defmodule Liquidacion do
     }
   end
 
+  # Calcula y agrupa las entregas de un productor por día
+  defp calcular_detalle_dias_entrega(entregas, productor) do
+    entregas
+    |> Enum.group_by(& &1.dia)
+    |> Enum.map(fn {dia, entregas_del_dia} ->
+      litros_dia = Enum.sum_by(entregas_del_dia, & &1.litros)
+      valor_dia = Enum.sum_by(entregas_del_dia, &valor_entrega/1)
+      bono_dia = bonificacion_volumen(entregas_del_dia)
+      transporte_dia = if productor.transporte, do: @costo_transporte, else: 0
+
+      %{
+        dia: dia,
+        cantidad_entregas: length(entregas_del_dia),
+        litros: litros_dia,
+        valor_entregas: valor_dia,
+        bonificacion: bono_dia,
+        transporte: transporte_dia
+      }
+    end)
+    |> Util.ordenar_coleccion(:asc, fn d -> d.dia end)
+  end
+
   @doc """
     Liquida todos los productores de la lista de entregas válidas.
     Retorna una lista de mapas con el detalle financiero de cada productor.
@@ -125,5 +130,4 @@ defmodule Liquidacion do
   def liquidar_todos(productores, entregas_validas) do
     Enum.map(productores, fn productor -> liquidar_productor(productor, entregas_validas) end)
   end
-
 end

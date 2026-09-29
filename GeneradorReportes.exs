@@ -29,19 +29,22 @@ defmodule ImpresorReportes do
     3) Producción por día
     #{render_litros_por_dia(reporte.litros_por_dia)}
 
-    4) Liquidaciones
+    4) Combinación de litros con el centro vecino
+    #{render_produccion_litros_combinada(reporte.combinacion_litros_centro_vecino)}
+
+    5) Liquidaciones
     #{render_liquidaciones(reporte.liquidaciones)}
 
-    5) Productor con más litros
+    6) Productor con más litros
     #{render_productor_mas_litros(reporte.productor_mas_litros)}
 
-    6) Productor con mejor calidad
+    7) Productor con mejor calidad
     #{render_productor_mejor_calidad(reporte.productor_mejor_calidad)}
 
-    7) Total pagado
+    8) Total pagado
     #{render_total_pagado(reporte.total_pagado)}
 
-    8) Productores en todos los tanques
+    9) Productores en todos los tanques
     #{render_productores_todos_los_tanques(reporte.productores_en_todos_los_tanques)}
     """
   end
@@ -54,7 +57,7 @@ defmodule ImpresorReportes do
         [] -> "  No hubo entregas rechazadas."
         _ ->
           detalle
-          |> Enum.map(fn rechazada ->
+          |> Util.convertir_coleccion_mensaje(fn rechazada ->
             "  - #{rechazada.productor} / #{rechazada.tanque} / día #{rechazada.dia}: #{formatear_motivo(rechazada.motivo)}"
           end)
           |> Enum.join("\n")
@@ -62,7 +65,9 @@ defmodule ImpresorReportes do
 
     motivos_texto =
       conteo
-      |> Enum.map(fn {motivo, cantidad} -> "  - #{formatear_motivo(motivo)}: #{cantidad}" end)
+      |> Util.convertir_coleccion_mensaje(fn {motivo, cantidad} ->
+        "  - #{formatear_motivo(motivo)}: #{cantidad}"
+      end)
       |> Enum.join("\n")
 
     "  Total de rechazos: #{total}\n" <>
@@ -103,6 +108,16 @@ defmodule ImpresorReportes do
     texto_detalle <> "\n" <> texto_resumen
   end
 
+  defp render_produccion_litros_combinada(litros_combinados) do
+  litros_combinados
+  |> Util.ordenar_coleccion(:asc, fn {dia, _litros} -> dia end)
+  |> Util.convertir_coleccion_mensaje(fn {dia, litros} ->
+    "  • Día #{String.pad_leading(to_string(dia), 2)}: #{Util.formatear_numero(litros)} L\n"
+  end)
+  |> Enum.join()
+  |> String.trim_trailing()
+end
+
   defp formatear_booleano(true), do: "Sí"
   defp formatear_booleano(false), do: "No"
 
@@ -127,7 +142,7 @@ defmodule ImpresorReportes do
   defp render_liquidaciones([]), do: "  No hay liquidaciones."
   defp render_liquidaciones(liquidaciones) do
     liquidaciones
-    |> Enum.map(fn liquidacion ->
+    |> Util.convertir_coleccion_mensaje(fn liquidacion ->
       "  - #{liquidacion.nombre} (#{liquidacion.codigo})\n" <>
         "      Litros: #{liquidacion.litros}\n" <>
         "      Valor de entregas: $#{Util.formatear_dinero(liquidacion.valor_entregas)}\n" <>
@@ -142,7 +157,7 @@ defmodule ImpresorReportes do
   defp render_productor_mejor_calidad(nil), do: "  No hay productores con al menos 3 entregas."
   defp render_productor_mejor_calidad(productores) do
     productores
-    |> Enum.map(fn %{productor: productor, grasa_ponderada: grasa, total_entregas: total} ->
+    |> Util.convertir_coleccion_mensaje(fn %{productor: productor, grasa_ponderada: grasa, total_entregas: total} ->
       nombre = if productor, do: productor.nombre, else: "Desconocido"
       "  - #{nombre}: #{grasa}% de grasa ponderada (#{total} entregas)"
     end)
@@ -167,7 +182,7 @@ defmodule ImpresorReportes do
 
       _ ->
         productores
-        |> Enum.map(fn p ->
+        |> Util.convertir_coleccion_mensaje(fn p ->
           if p == nil, do: "  - Desconocido", else: "  - #{p.nombre}"
         end)
         |> Enum.join("\n")
