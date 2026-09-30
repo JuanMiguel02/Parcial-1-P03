@@ -25,6 +25,7 @@ defmodule ProcesamientoReportes do
     productor_mejor_calidad: generar_reporte_productor_mejor_calidad(entregas, productores),
     productores_en_todos_los_tanques: productores_en_todos_los_tanques(entregas, tanques, productores)
   }
+
   end
 
   # R1: Genera el reporte para las entregas rechazadas
@@ -120,69 +121,64 @@ defmodule ProcesamientoReportes do
   end
 
   #Función auxiliar de R5 que devuelve al productor o los productores que más litros entregaron en más días
-   defp calcular_ganadores_diarios(entregas, productores) do
-    entregas_por_dia = Enum.group_by(entregas, fn e -> e.dia end)
+ defp calcular_ganadores_diarios(entregas, productores) do
+  entregas
+  |> Enum.group_by(& &1.dia)
+  |> Enum.map(fn {dia, entregas_del_dia} ->
+    # 1. Acumulamos litros diarios por productor
+    litros_por_productor =
+      entregas_del_dia
+      |> Enum.reduce(%{}, fn e, acc ->
+        Map.update(acc, e.productor, e.litros, &(&1 + e.litros))
+      end)
+      |> Enum.map(fn {cod, litros} ->
+        info = Enum.find(productores, &(&1.codigo == cod))
 
-    Enum.map(Parametros.dias_recepcion(), fn dia ->
-      entregas_del_dia = Map.get(entregas_por_dia, dia, [])
+        %{
+          codigo: cod,
+          nombre: if(info, do: info.nombre, else: "Desconocido"),
+          litros: litros
+        }
+      end)
 
-      if entregas_del_dia == [] do
-        %{dia: dia, ganadores: [], max_litros: 0}
-      else
-        litros_por_productor =
-          Enum.reduce(entregas_del_dia, %{}, fn e, acc ->
-            Map.update(acc, e.productor, e.litros, fn suma -> suma + e.litros end)
-          end)
+    # 2. Extraemos el/los ganadores del día con la función ranking
+    ganadores_del_dia =
+      Ranking.calcular(litros_por_productor, por: :litros, orden: :desc, limite: 1, permitir_empates: true)
 
-        {_cod_max, max_litros} =
-          Enum.max_by(litros_por_productor, fn {_cod, litros} -> litros end)
+    max_litros = case ganadores_del_dia do
+      [primero | _] -> primero.litros
+      [] -> 0
+    end
 
-        ganadores_del_dia =
-          litros_por_productor
-          |> Enum.filter(fn {_cod, litros} -> litros == max_litros end)
-          |> Enum.map(fn {cod, _litros} ->
-            productor_info = Enum.find(productores, fn p -> p.codigo == cod end)
-
-            %{
-              codigo: cod,
-              nombre: if(productor_info, do: productor_info.nombre, else: "Desconocido")
-            }
-          end)
-
-        %{dia: dia, ganadores: ganadores_del_dia, max_litros: max_litros}
-      end
-    end)
-  end
+    %{dia: dia, ganadores: ganadores_del_dia, max_litros: max_litros}
+  end)
+  |> Util.ordenar_coleccion(:asc, & &1.dia)
+end
 
    #Función auxiliar de R5 que devuelve al productor o los productores que más litros entregaron en más días
-  defp calcular_ganador_frecuente(reporte_diario) do
-    ganadores =
-      reporte_diario
-      |> Enum.flat_map(& &1.ganadores)
+ defp calcular_ganador_frecuente(reporte_diario) do
+  ganadores = Enum.flat_map(reporte_diario, & &1.ganadores)
 
-    case ganadores do
-      [] ->
-        "Ninguno"
+  case ganadores do
+    [] ->
+      "Ninguno"
 
-      _ ->
-        victorias =
-          Enum.frequencies_by(ganadores, & &1.nombre)
+    _ ->
+      # Agrupamos por código para evitar colisiones de nombres iguales
+      victorias = Enum.frequencies_by(ganadores, & &1.codigo)
+      max_victorias = victorias |> Map.values() |> Enum.max()
 
-        max_victorias =
-          victorias
-          |> Map.values()
-          |> Enum.max()
-
-        victorias
-        |> Enum.filter(fn {_nombre, cantidad} -> cantidad == max_victorias end)
-        |> Enum.map(fn {nombre, cantidad} -> "#{nombre} (#{cantidad} días)" end)
-        |> Enum.join(", ")
-    end
+      victorias
+      |> Enum.filter(fn {_codigo, cantidad} -> cantidad == max_victorias end)
+      |> Enum.map(fn {codigo, cantidad} ->
+        productor = Enum.find(ganadores, &(&1.codigo == codigo))
+        "#{productor.nombre} (#{cantidad} días)"
+      end)
+      |> Enum.join(", ")
   end
-
+end
   # R6 genera el reporte del productor con mejor calidad de leche
   defp generar_reporte_productor_mejor_calidad(entregas, productores) do
-    candidatos =
       entregas
       |> Enum.group_by(fn entrega -> entrega.productor end)
       |> Enum.filter(fn {_cod, lista_entregas} -> length(lista_entregas) >= 3 end)
@@ -198,13 +194,7 @@ defmodule ProcesamientoReportes do
           total_entregas: length(lista_entregas)
         }
       end)
-
-    if candidatos == [] do
-      nil
-    else
-      max_grasa = Enum.max_by(candidatos, & &1.grasa_ponderada).grasa_ponderada
-      Enum.filter(candidatos, fn candidato -> candidato.grasa_ponderada == max_grasa end)
-    end
+      |> Ranking.calcular(por: :grasa_ponderada, orden: :desc, limite: 1, permitir_empates: true)
   end
 
   # R7 Genera el resumen general de la empresa, como cuanto se ha pagado, litros ingresados, bonos pagados, etc

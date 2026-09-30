@@ -1,3 +1,5 @@
+# Juan Miguel Henao Gaviria
+# Valeria Zapata Giraldo
 defmodule Parametros do
   @moduledoc """
   Centraliza algunos de los los parámetros  de operación del centro de acopio de leche.

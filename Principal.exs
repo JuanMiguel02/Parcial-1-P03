@@ -8,10 +8,12 @@ Code.require_file("CalidadLeche.exs")
 Code.require_file("Liquidacion.exs")
 Code.require_file("ValidacionRegistro.exs")
 Code.require_file("Validador.exs")
+Code.require_file("Ranking.exs")
 Code.require_file("ProcesamientoReportes.exs")
 Code.require_file("GeneracionReportes.exs")
 Code.require_file("GeneracionComprobante.exs")
 Code.require_file("CombinacionInformacionCentroVecino.exs")
+
 
 defmodule CentroAcopioLeche do
   @moduledoc """
