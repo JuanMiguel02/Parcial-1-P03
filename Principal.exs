@@ -29,11 +29,15 @@ defmodule CentroAcopioLeche do
 
     entregas_totales = solicitar_entrega_adicional(entregas_iniciales)
 
-    {validas, invalidas} = Validador.clasificar_entregas(entregas_totales, productores, tanques)
+     #Medición de tiempo de ejecución para la clasificación de entregas
+    {validas, invalidas} = medir_tiempo("Clasificación de entregas", fn -> Validador.clasificar_entregas(entregas_totales, productores, tanques)
+    end)
 
     rechazadas = Enum.map(invalidas, fn {entrega, motivo} -> Map.put(entrega, :motivo, motivo) end)
 
-    reporte = ProcesamientoReportes.generar_reporte(validas, rechazadas, tanques, productores)
+    #Medición de tiempo de ejecución para la generación del reporte
+    reporte = medir_tiempo("Generación de reporte general", fn -> ProcesamientoReportes.generar_reporte(validas, rechazadas, tanques, productores)
+    end)
     Util.mostrar(GeneracionReportes.mostrar(reporte), :mensaje)
 
     solicitar_y_mostrar_comprobante(productores, validas)
@@ -69,5 +73,11 @@ end
       |> Util.mostrar(:mensaje)
     end
 
+    defp medir_tiempo(nombre_proceso, funcion) do
+        {tiempo_us, resultado} = :timer.tc(funcion)
+        tiempo_ms = tiempo_us / 1000
+        Util.mostrar("[timer.tc/1] Tiempo de #{nombre_proceso}: #{tiempo_ms} ms", :mensaje)
+        resultado
+      end
 end
 CentroAcopioLeche.main()
