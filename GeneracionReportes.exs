@@ -140,29 +140,25 @@ defmodule GeneracionReportes do
   # Muestra las liquidaciones de cada productor
   defp render_liquidaciones([]), do: "  No hay liquidaciones."
 
-  defp render_liquidaciones(liquidaciones) do
-    liquidaciones
-    |> Util.convertir_coleccion_mensaje(fn liquidacion ->
-      "  - #{liquidacion.nombre} (#{liquidacion.codigo})\n" <>
-        "      Litros: #{liquidacion.litros}\n" <>
-        "      Valor de entregas: $#{Util.formatear_dinero(liquidacion.valor_entregas)}\n" <>
-        "      Bonificaciones: $#{Util.formatear_dinero(liquidacion.bonificaciones)}\n" <>
-        "      Transporte: $#{Util.formatear_dinero(liquidacion.transporte)}\n" <>
-        "      Neto: $#{Util.formatear_dinero(liquidacion.neto)} \n"
-    end)
-    |> Enum.join("\n")
-  end
-
+ defp render_liquidaciones(liquidaciones) do
+  liquidaciones
+  |> Enum.with_index(1) # Asigna el índice empezando en 1
+  |> Util.convertir_coleccion_mensaje(fn {liquidacion, i} ->
+    "  #{i}. #{liquidacion.nombre_productor} (#{liquidacion.codigo_productor})\n" <>
+      "      Litros: #{liquidacion.litros}\n" <>
+      "      Valor de entregas: $#{Util.formatear_dinero(liquidacion.valor_entregas)}\n" <>
+      "      Bonificaciones: $#{Util.formatear_dinero(liquidacion.bonificaciones)}\n" <>
+      "      Transporte: $#{Util.formatear_dinero(liquidacion.transporte)}\n" <>
+      "      Neto: $#{Util.formatear_dinero(liquidacion.neto)}\n"
+  end)
+  |> Enum.join("\n")
+end
   # Muestra al productor con mejor calidad
   defp render_productor_mejor_calidad(nil), do: "  No hay productores con al menos 3 entregas."
 
   defp render_productor_mejor_calidad(productores) do
     productores
-    |> Util.convertir_coleccion_mensaje(fn %{
-                                             productor: productor,
-                                             grasa_ponderada: grasa,
-                                             total_entregas: total
-                                           } ->
+    |> Util.convertir_coleccion_mensaje(fn %{     productor: productor, grasa_ponderada: grasa, total_entregas: total   } ->
       nombre = if productor, do: productor.nombre, else: "Desconocido"
       "  - #{nombre}: #{grasa}% de grasa ponderada (#{total} entregas)"
     end)

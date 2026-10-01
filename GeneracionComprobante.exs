@@ -42,7 +42,7 @@ defmodule GeneracionComprobante do
       end
 
     "\t\t ----------  COMPROBANTE DE LIQUIDACIÓN ----------\n\n" <>
-      "Productor: #{liquidacion.nombre} (#{liquidacion.codigo})\n\n" <>
+      "Productor: #{liquidacion.nombre_productor} (#{liquidacion.codigo_productor})\n\n" <>
       "Detalle por día:\n" <>
       "#{detalle_texto}\n\n" <>
       "Resumen:\n" <>

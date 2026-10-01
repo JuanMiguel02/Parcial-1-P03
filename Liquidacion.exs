@@ -91,8 +91,8 @@ defmodule Liquidacion do
     neto = valor_entregas + bonificaciones - transporte
 
     %{
-      codigo: productor.codigo,
-      nombre: productor.nombre,
+      codigo_productor: productor.codigo,
+      nombre_productor: productor.nombre,
       detalle_dias: detalle_dias,
       total_entregas: length(entregas_p),
       litros: litros_totales,
