@@ -100,7 +100,7 @@ defmodule Util do
   def formatear_dinero(valor) when is_number(valor) do
     str = :erlang.float_to_binary(valor * 1.0, decimals: 2)
     [entera, decimal] = String.split(str, ".")
-    "#{formatear_numero(entera)}.#{decimal}"
+    "#{formatear_numero(entera)},#{decimal}"
   end
 
   def formatear_dinero(valor), do: to_string(valor)
