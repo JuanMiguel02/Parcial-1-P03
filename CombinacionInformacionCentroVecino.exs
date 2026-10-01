@@ -31,10 +31,13 @@ defmodule CombinacionLitros do
 
     "\n+-----------------------INVESTIGACIÓN: COMBINACIÓN MAP.MERGE/3-----------------------+"
     |> Util.mostrar(:mensaje)
+
     "Litros locales por día: #{inspect(litros_locales)}"
     |> Util.mostrar(:mensaje)
+
     "Litros centro vecino:   #{inspect(centro_vecino)}"
     |> Util.mostrar(:mensaje)
+
     "Litros combinados:      #{inspect(litros_combinados)}"
     |> Util.mostrar(:mensaje)
   end

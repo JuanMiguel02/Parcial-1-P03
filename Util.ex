@@ -2,9 +2,23 @@
 # Valeria Zapata Giraldo
 defmodule Util do
   @moduledoc """
-  Funciones auxiliares reutilizables para entrada, salida y transformación de datos.
+  Módulo con utilidades reutilizables
+
+  Centraliza tareas de entrada/salida del usuario, formateo de valores,
+  transformación de colecciones y operaciones pequeñas de apoyo para el resto
+  del sistema. Su objetivo es mantener la lógica de negocio más limpia y
+  evitar duplicación de código entre los módulos del proyecto.
   """
 
+  @doc """
+  Muestra un mensaje en la salida estándar o de errores según el tipo indicado.
+
+  ## Parámetros
+
+    - `mensaje`: texto a imprimir.
+    - `:mensaje` o `:error`: indica si debe mostrarse en consola normal o en
+      error estándar.
+  """
   def mostrar(mensaje, :mensaje) do
     mensaje
     |> IO.puts()
@@ -14,6 +28,13 @@ defmodule Util do
     IO.puts(:standard_error, mensaje)
   end
 
+  @doc """
+  Lee una cadena de texto desde la entrada del usuario y elimina espacios
+  sobrantes al inicio y al final.
+
+  Las variantes con tipos específicos (`:entero`, `:real`, `:booleano`, etc.)
+  reutilizan esta función para leer la entrada base y convertir el valor.
+  """
   def ingresar(mensaje, :texto) do
     mensaje
     |> IO.gets()
@@ -29,15 +50,17 @@ defmodule Util do
   end
 
   def ingresar(mensaje, :booleano) do
-    ingresar(mensaje,
-     fn texto ->
-      case String.downcase(texto) do
-        "s" -> {true, ""}
-        "n" -> {false, ""}
-        _ -> :error
-      end
-    end,
-    :booleano)
+    ingresar(
+      mensaje,
+      fn texto ->
+        case String.downcase(texto) do
+          "s" -> {true, ""}
+          "n" -> {false, ""}
+          _ -> :error
+        end
+      end,
+      :booleano
+    )
   end
 
   def ingresar(mensaje, :coleccion_enteros) do
@@ -56,8 +79,17 @@ defmodule Util do
     ingresar_coleccion(ingresar_elemento, [])
   end
 
+  @doc """
+  Aplica un formato a cada elemento de una colección y devuelve la lista de
+  cadenas resultantes.
+
+  ## Ejemplo
+
+      Util.convertir_coleccion_mensaje([1, 2, 3])
+
+  """
   def convertir_coleccion_mensaje(coleccion, formato \\ fn elemento -> " - #{elemento}\n" end) do
-    Enum.map(coleccion , formato)
+    Enum.map(coleccion, formato)
   end
 
   @doc """
@@ -84,25 +116,44 @@ defmodule Util do
     |> String.replace(~r/\B(?=(\d{3})+(?!\d))/, ".")
   end
 
+  @doc """
+  Ordena una colección según un criterio especificado.
+
+  ## Parámetros
+
+    - `coleccion`: lista o enumerable a ordenar.
+    - `sentido`: `:asc` o `:desc`.
+    - `obtener_campo`: función que define el valor de orden.
+  """
   def ordenar_coleccion(coleccion, sentido \\ :asc, obtener_campo \\ & &1) do
     Enum.sort_by(coleccion, obtener_campo, sentido)
   end
 
+  @doc """
+  Filtra los elementos de una lista cuyo texto tiene una longitud menor o igual
+  a la indicada.
+  """
   def aplicar_filtro_longitud(coleccion, longitud) do
     Enum.filter(coleccion, &(String.length(&1) <= longitud))
   end
 
+  @doc """
+  Filtra los elementos de una lista cuyo texto comienza con el prefijo dado.
+  """
   def aplicar_filtro_inicial(coleccion, inicio) do
-    Enum.filter(coleccion, &(String.starts_with?(&1, inicio)))
+    Enum.filter(coleccion, &String.starts_with?(&1, inicio))
   end
 
   defp ingresar(mensaje, funcion, tipo_dato) do
-    valor = mensaje
-    |> ingresar(:texto)
-    |> funcion.()
+    valor =
+      mensaje
+      |> ingresar(:texto)
+      |> funcion.()
 
     case valor do
-      {numero, _} -> numero
+      {numero, _} ->
+        numero
+
       :error ->
         mostrar("Error, tipo de dato inválido para: #{tipo_dato} ", :error)
         ingresar(mensaje, funcion, tipo_dato)
@@ -119,5 +170,4 @@ defmodule Util do
       false -> Enum.reverse(nueva_coleccion)
     end
   end
-
 end

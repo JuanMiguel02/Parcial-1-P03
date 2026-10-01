@@ -1,7 +1,6 @@
 # Juan Miguel Henao Gaviria
 # Valeria Zapata Giraldo
 defmodule Validador do
-
   @doc """
     Valida una entrega individual según las 5 reglas de negocio en orden estricto.
     Retorna {:ok, entrega} si cumple todas las reglas, o {:error, motivo} si falla alguna.
@@ -22,21 +21,25 @@ defmodule Validador do
     Procesa toda la lista de entregas y las separa en dos listas: válidas e inválidas.
   """
   def clasificar_entregas(entregas, productores, tanques) do
-    {validas_invertidas, invalidas_invertidas} = Enum.reduce(entregas, {[], []}, fn entrega, acumulador -> {validas, invalidas} = acumulador
+    {validas_invertidas, invalidas_invertidas} =
+      Enum.reduce(entregas, {[], []}, fn entrega, acumulador ->
+        {validas, invalidas} = acumulador
 
-      case validar_entrega(entrega, productores, tanques) do
-        {:ok, entrega_valida} -> {[entrega_valida | validas], invalidas}
+        case validar_entrega(entrega, productores, tanques) do
+          {:ok, entrega_valida} ->
+            {[entrega_valida | validas], invalidas}
 
-        {:error, motivo, entrega_rechazada} -> {validas, [{entrega_rechazada, motivo} | invalidas]}
-      end
-    end)
+          {:error, motivo, entrega_rechazada} ->
+            {validas, [{entrega_rechazada, motivo} | invalidas]}
+        end
+      end)
 
     validas = Enum.reverse(validas_invertidas)
     invalidas = Enum.reverse(invalidas_invertidas)
     {validas, invalidas}
   end
 
-#FUNCIONES PRIVADAS PARA VALIDAR CADA REGLA DE NEGOCIO
+  # FUNCIONES PRIVADAS PARA VALIDAR CADA REGLA DE NEGOCIO
 
   defp verificar_productor(codigo, productores) do
     if Enum.any?(productores, fn p -> p.codigo == codigo end) do
@@ -70,6 +73,8 @@ defmodule Validador do
     end
   end
 
-  defp verificar_grasa(grasa) when is_number(grasa) and grasa >= 0 and grasa <= 15, do: {:ok, grasa}
+  defp verificar_grasa(grasa) when is_number(grasa) and grasa >= 0 and grasa <= 15,
+    do: {:ok, grasa}
+
   defp verificar_grasa(_), do: {:error, :porcentaje_invalido}
 end

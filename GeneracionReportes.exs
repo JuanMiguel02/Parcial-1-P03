@@ -15,8 +15,8 @@ defmodule GeneracionReportes do
   `ProcesamientoReportes.generar_reporte/5`. El resultado puede imprimirse con
   `IO.puts/1` o utilizarse como texto para otro medio de salida.
   """
-  @spec mostrar(map()) :: String.t()
-  def mostrar(reporte) do
+  @spec generar_reporte(map()) :: String.t()
+  def generar_reporte(reporte) do
     """
     +------------------------------------------------------+
     |                    REPORTE GENERAL                    |
@@ -50,14 +50,20 @@ defmodule GeneracionReportes do
 
   # Desestructura el mapa de entregas rechazadas y muestra cada una
   # Además enumera la cantidad de motivos de rechazos
-  defp render_entregas_rechazadas(%{total_rechazos: total, detalle: detalle, conteo_por_motivo: conteo}) do
+  defp render_entregas_rechazadas(%{
+         total_rechazos: total,
+         detalle: detalle,
+         conteo_por_motivo: conteo
+       }) do
     detalle_texto =
       case detalle do
-        [] -> "  No hubo entregas rechazadas."
+        [] ->
+          "  No hubo entregas rechazadas."
+
         _ ->
           detalle
           |> Util.convertir_coleccion_mensaje(fn rechazada ->
-            "  - #{rechazada.productor} / #{rechazada.tanque} / día #{rechazada.dia}: #{formatear_motivo(rechazada.motivo)}"
+            "  - #{rechazada.productor} / #{rechazada.tanque} / día #{rechazada.dia}/ litros: #{rechazada.litros} / grasa: #{rechazada.grasa}: #{formatear_motivo(rechazada.motivo)} "
           end)
           |> Enum.join("\n")
       end
@@ -74,11 +80,14 @@ defmodule GeneracionReportes do
   end
 
   # Formatea el motivo que viene como clave en formato snake_case
-  defp formatear_motivo(motivo) when is_atom(motivo), do: motivo |> Atom.to_string() |> String.replace("_", " ")
+  defp formatear_motivo(motivo) when is_atom(motivo),
+    do: motivo |> Atom.to_string() |> String.replace("_", " ")
+
   defp formatear_motivo(motivo), do: to_string(motivo)
 
   # Muestran la información de los tanques como su nombre, capacidad, etc...
   defp render_tanques([]), do: "  No hay datos de tanques."
+
   defp render_tanques(tanques) do
     tanques
     |> Util.convertir_coleccion_mensaje(fn t ->
@@ -110,7 +119,7 @@ defmodule GeneracionReportes do
   defp formatear_booleano(true), do: "Sí"
   defp formatear_booleano(false), do: "No"
 
-  #Muestra al productor con mas litros entregados cada día y a quien o quienes ocuparon el primer lugar más dias
+  # Muestra al productor con mas litros entregados cada día y a quien o quienes ocuparon el primer lugar más dias
   defp render_productor_mas_litros(%{detalle_diario: detalle, productor_mas_dias: ganador}) do
     if detalle == [] do
       "  No hay información."
@@ -119,6 +128,7 @@ defmodule GeneracionReportes do
         detalle
         |> Util.convertir_coleccion_mensaje(fn r ->
           ganadores = Enum.map_join(r.ganadores, ", ", & &1.nombre)
+
           "  - Día #{r.dia}: #{if ganadores == "", do: "Ninguno", else: ganadores} (#{r.max_litros} L)\n"
         end)
         |> Enum.join()
@@ -129,6 +139,7 @@ defmodule GeneracionReportes do
 
   # Muestra las liquidaciones de cada productor
   defp render_liquidaciones([]), do: "  No hay liquidaciones."
+
   defp render_liquidaciones(liquidaciones) do
     liquidaciones
     |> Util.convertir_coleccion_mensaje(fn liquidacion ->
@@ -144,9 +155,14 @@ defmodule GeneracionReportes do
 
   # Muestra al productor con mejor calidad
   defp render_productor_mejor_calidad(nil), do: "  No hay productores con al menos 3 entregas."
+
   defp render_productor_mejor_calidad(productores) do
     productores
-    |> Util.convertir_coleccion_mensaje(fn %{productor: productor, grasa_ponderada: grasa, total_entregas: total} ->
+    |> Util.convertir_coleccion_mensaje(fn %{
+                                             productor: productor,
+                                             grasa_ponderada: grasa,
+                                             total_entregas: total
+                                           } ->
       nombre = if productor, do: productor.nombre, else: "Desconocido"
       "  - #{nombre}: #{grasa}% de grasa ponderada (#{total} entregas)"
     end)

@@ -1,7 +1,9 @@
+# Juan Miguel Henao Gaviria
+# Valeria Zapata Giraldo
 defmodule Ranking do
- @moduledoc """
+  @moduledoc """
   Módulo encargado de clasificar y ordenar colecciones de datos basadas en mapas
-  o estructuras dentro del dominio.
+  u otras estructuras
 
   Permite aplicar criterios de ordenamiento dinámicos, limitar el número de
   resultados y gestionar empates en las primeras posiciones mediante opciones

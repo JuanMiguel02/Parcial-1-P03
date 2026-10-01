@@ -14,18 +14,19 @@ defmodule ProcesamientoReportes do
   Las entregas rechazadas deben incluir el campo `:motivo`. Las entregas
   recibidas en `entregas` deben haber sido validadas previamente.
   """
-  def generar_reporte(entregas, entregas_rechazadas, tanques, productores) do
-   %{
-    entregas_rechazadas: generar_reporte_entregas_rechazadas(entregas_rechazadas),
-    tanques: generar_reporte_tanques(entregas, tanques),
-    litros_por_dia: generar_reporte_litros_recibidos_dias(entregas),
-    liquidaciones: generar_reporte_liquidaciones_ordenado(entregas, productores),
-    productor_mas_litros: generar_reporte_productor_mas_litros_entregados(entregas, productores),
-    total_pagado: generar_reporte_total_pagado(entregas, productores),
-    productor_mejor_calidad: generar_reporte_productor_mejor_calidad(entregas, productores),
-    productores_en_todos_los_tanques: productores_en_todos_los_tanques(entregas, tanques, productores)
-  }
-
+  def procesar_reporte(entregas, entregas_rechazadas, tanques, productores) do
+    %{
+      entregas_rechazadas: generar_reporte_entregas_rechazadas(entregas_rechazadas),
+      tanques: generar_reporte_tanques(entregas, tanques),
+      litros_por_dia: generar_reporte_litros_recibidos_dias(entregas),
+      liquidaciones: generar_reporte_liquidaciones_ordenado(entregas, productores),
+      productor_mas_litros:
+        generar_reporte_productor_mas_litros_entregados(entregas, productores),
+      total_pagado: generar_reporte_total_pagado(entregas, productores),
+      productor_mejor_calidad: generar_reporte_productor_mejor_calidad(entregas, productores),
+      productores_en_todos_los_tanques:
+        productores_en_todos_los_tanques(entregas, tanques, productores)
+    }
   end
 
   # R1: Genera el reporte para las entregas rechazadas
@@ -58,9 +59,9 @@ defmodule ProcesamientoReportes do
         porcentaje_ocupacion =
           if tanque.capacidad > 0 do
             Float.round(litros_actuales / tanque.capacidad * 100, 2)
-        else
-          0.0
-        end
+          else
+            0.0
+          end
 
         %{
           id_tanque: tanque.id,
@@ -120,81 +121,88 @@ defmodule ProcesamientoReportes do
     }
   end
 
-  #Función auxiliar de R5 que devuelve al productor o los productores que más litros entregaron en más días
- defp calcular_ganadores_diarios(entregas, productores) do
-  entregas
-  |> Enum.group_by(& &1.dia)
-  |> Enum.map(fn {dia, entregas_del_dia} ->
-    # 1. Acumulamos litros diarios por productor
-    litros_por_productor =
-      entregas_del_dia
-      |> Enum.reduce(%{}, fn e, acc ->
-        Map.update(acc, e.productor, e.litros, &(&1 + e.litros))
-      end)
-      |> Enum.map(fn {cod, litros} ->
-        info = Enum.find(productores, &(&1.codigo == cod))
+  # Función auxiliar de R5 que devuelve al productor o los productores que más litros entregaron en más días
+  defp calcular_ganadores_diarios(entregas, productores) do
+    entregas
+    |> Enum.group_by(& &1.dia)
+    |> Enum.map(fn {dia, entregas_del_dia} ->
+      # 1. Acumulamos litros diarios por productor
+      litros_por_productor =
+        entregas_del_dia
+        |> Enum.reduce(%{}, fn e, acc ->
+          Map.update(acc, e.productor, e.litros, &(&1 + e.litros))
+        end)
+        |> Enum.map(fn {cod, litros} ->
+          info = Enum.find(productores, &(&1.codigo == cod))
 
-        %{
-          codigo: cod,
-          nombre: if(info, do: info.nombre, else: "Desconocido"),
-          litros: litros
-        }
-      end)
+          %{
+            codigo: cod,
+            nombre: if(info, do: info.nombre, else: "Desconocido"),
+            litros: litros
+          }
+        end)
 
-    # 2. Extraemos el/los ganadores del día con la función ranking
-    ganadores_del_dia =
-      Ranking.calcular(litros_por_productor, por: :litros, orden: :desc, limite: 1, permitir_empates: true)
+      # 2. Extraemos el/los ganadores del día con la función ranking
+      ganadores_del_dia =
+        Ranking.calcular(litros_por_productor,
+          por: :litros,
+          orden: :desc,
+          limite: 1,
+          permitir_empates: true
+        )
 
-    max_litros = case ganadores_del_dia do
-      [primero | _] -> primero.litros
-      [] -> 0
-    end
+      max_litros =
+        case ganadores_del_dia do
+          [primero | _] -> primero.litros
+          [] -> 0
+        end
 
-    %{dia: dia, ganadores: ganadores_del_dia, max_litros: max_litros}
-  end)
-  |> Util.ordenar_coleccion(:asc, & &1.dia)
-end
-
-   #Función auxiliar de R5 que devuelve al productor o los productores que más litros entregaron en más días
- defp calcular_ganador_frecuente(reporte_diario) do
-  ganadores = Enum.flat_map(reporte_diario, & &1.ganadores)
-
-  case ganadores do
-    [] ->
-      "Ninguno"
-
-    _ ->
-      # Agrupamos por código para evitar colisiones de nombres iguales
-      victorias = Enum.frequencies_by(ganadores, & &1.codigo)
-      max_victorias = victorias |> Map.values() |> Enum.max()
-
-      victorias
-      |> Enum.filter(fn {_codigo, cantidad} -> cantidad == max_victorias end)
-      |> Enum.map(fn {codigo, cantidad} ->
-        productor = Enum.find(ganadores, &(&1.codigo == codigo))
-        "#{productor.nombre} (#{cantidad} días)"
-      end)
-      |> Enum.join(", ")
+      %{dia: dia, ganadores: ganadores_del_dia, max_litros: max_litros}
+    end)
+    |> Util.ordenar_coleccion(:asc, & &1.dia)
   end
-end
+
+  # Función auxiliar de R5 que devuelve al productor o los productores que más litros entregaron en más días
+  defp calcular_ganador_frecuente(reporte_diario) do
+    ganadores = Enum.flat_map(reporte_diario, & &1.ganadores)
+
+    case ganadores do
+      [] ->
+        "Ninguno"
+
+      _ ->
+        # Agrupamos por código para evitar colisiones de nombres iguales
+        victorias = Enum.frequencies_by(ganadores, & &1.codigo)
+        max_victorias = victorias |> Map.values() |> Enum.max()
+
+        victorias
+        |> Enum.filter(fn {_codigo, cantidad} -> cantidad == max_victorias end)
+        |> Enum.map(fn {codigo, cantidad} ->
+          productor = Enum.find(ganadores, &(&1.codigo == codigo))
+          "#{productor.nombre} (#{cantidad} días)"
+        end)
+        |> Enum.join(", ")
+    end
+  end
+
   # R6 genera el reporte del productor con mejor calidad de leche
   defp generar_reporte_productor_mejor_calidad(entregas, productores) do
-      entregas
-      |> Enum.group_by(fn entrega -> entrega.productor end)
-      |> Enum.filter(fn {_cod, lista_entregas} -> length(lista_entregas) >= 3 end)
-      |> Enum.map(fn {cod_productor, lista_entregas} ->
-        grasa_ponderada = CalidadLeche.calcular_grasa_ponderada(lista_entregas)
+    entregas
+    |> Enum.group_by(fn entrega -> entrega.productor end)
+    |> Enum.filter(fn {_cod, lista_entregas} -> length(lista_entregas) >= 3 end)
+    |> Enum.map(fn {cod_productor, lista_entregas} ->
+      grasa_ponderada = CalidadLeche.calcular_grasa_ponderada(lista_entregas)
 
-        info_productor =
-          Enum.find(productores, fn productor -> productor.codigo == cod_productor end)
+      info_productor =
+        Enum.find(productores, fn productor -> productor.codigo == cod_productor end)
 
-        %{
-          productor: info_productor,
-          grasa_ponderada: Float.round(grasa_ponderada, 2),
-          total_entregas: length(lista_entregas)
-        }
-      end)
-      |> Ranking.calcular(por: :grasa_ponderada, orden: :desc, limite: 1, permitir_empates: true)
+      %{
+        productor: info_productor,
+        grasa_ponderada: Float.round(grasa_ponderada, 2),
+        total_entregas: length(lista_entregas)
+      }
+    end)
+    |> Ranking.calcular(por: :grasa_ponderada, orden: :desc, limite: 1, permitir_empates: true)
   end
 
   # R7 Genera el resumen general de la empresa, como cuanto se ha pagado, litros ingresados, bonos pagados, etc
@@ -225,9 +233,9 @@ end
   end
 
   # R8
-  #Devuelve los productores que realizaron entregas en todos los tanques.
-  #La comparación se hace usando los identificadores de tanque presentes en
-  #tanques y las entregas válidas de cada productor.
+  # Devuelve los productores que realizaron entregas en todos los tanques.
+  # La comparación se hace usando los identificadores de tanque presentes en
+  # tanques y las entregas válidas de cada productor.
   def productores_en_todos_los_tanques(entregas_validas, tanques, productores) do
     total_tanques = length(tanques)
 
