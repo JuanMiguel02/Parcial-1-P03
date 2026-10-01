@@ -25,7 +25,7 @@ defmodule CombinacionLitros do
       |> Enum.map(fn item -> {item.dia, item.litros} end)
       |> Map.new()
 
-    centro_vecino = %{1 => 1850.5, 2 => 2100.0, 3 => 1640.0, 5 => 2350.0, 6 => 800.0}
+    centro_vecino = %{1 => 1850.5, 2 => 2100.0, 3 => 1640.0, 5 => 2350.0, 7 => 800.0}
 
     litros_combinados = combinar_litros_diarios(litros_locales, centro_vecino)
 
